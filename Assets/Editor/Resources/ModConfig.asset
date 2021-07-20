@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 615501dbe4f3fe94fbf4b564abb10237, type: 3}
+  m_Name: ModConfig
+  m_EditorClassIdentifier: 
+  id: spinningMazes
+  title: Spinning Mazes
+  author: BakersDozenBagels
+  description: 'No, this isn''t some horrible interface screw. I''m not that evil.
+
+
+    Module id: spinningMazes'
+  version: 1.0
+  outputFolder: build
+  previewImage: {fileID: 2800000, guid: fbecdd37b0a5f4c40b62a57af8e851d9, type: 3}
