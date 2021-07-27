@@ -43,7 +43,7 @@ public class SpinningMazesScript : ModuleScript
         new int[] { 9, 14, 5, 3, 11, 14, 13, 7, 9 }.Cast<Direction>().ToArray(),
         new int[] { 10, 13, 14, 15, 13, 7, 10, 13, 6 }.Cast<Direction>().ToArray(),
         new int[] { 3, 0, 3, 3, 10, 13, 5, 0, 3 }.Cast<Direction>().ToArray(),
-        new int[] { 0, 12, 5, 3, 5, 12, 12, 12, 0 }.Cast<Direction>().ToArray(),
+        new int[] { 0, 12, 5, 3, 9, 12, 12, 12, 0 }.Cast<Direction>().ToArray(),
     };
 
     private void Start()
