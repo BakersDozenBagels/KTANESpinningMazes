@@ -3,6 +3,8 @@ using System;
 using System.Collections;
 using UnityEngine;
 using System.Linq;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 public class SpinningMazesScript : ModuleScript
 {
@@ -327,5 +329,216 @@ public class SpinningMazesScript : ModuleScript
             button.transform.parent.localPosition = Vector3.Lerp(Vector3.down * 0.03f, Vector3.zero, time + 0.8f);
             yield return null;
         }
+    }
+
+#pragma warning disable 414
+    private readonly string TwitchHelpMessage = "Use '!{0} 12 34' to press the top-left, top-right, bottom-left, and bottom-right bbuttons in that order.";
+#pragma warning restore 414
+
+    public IEnumerator ProcessTwitchCommand(string command)
+    {
+        Regex r = new Regex(@"^(?:press\s+)?((?:[1-4]\s*)+)$");
+        Match m = r.Match(command.Trim().ToLowerInvariant());
+        if(!m.Success)
+            yield break;
+
+        Regex cr = new Regex("[1-4]");
+        IEnumerable<KMSelectable> bs = m.Groups[1].Value.Where(c => cr.IsMatch(c.ToString())).Select(c => Buttons[int.Parse(c.ToString()) - 1]);
+
+        foreach(KMSelectable b in bs)
+        {
+            b.OnInteract();
+            yield return new WaitForSeconds(0.2f);
+        }
+        yield return null;
+    }
+
+    public IEnumerator TwitchHandleForcedSolve()
+    {
+        foreach(object e in SpinToDirection())
+            yield return e;
+
+        Vector2Int exitp;
+        switch(ColoredButtonColor)
+        {
+            case Color.Red:
+                exitp = new Vector2Int(5, 0);
+                break;
+            case Color.Green:
+                exitp = new Vector2Int(8, 5);
+                break;
+            case Color.Blue:
+                exitp = new Vector2Int(3, 8);
+                break;
+            case Color.Yellow:
+                exitp = new Vector2Int(0, 3);
+                break;
+            default:
+                throw new Exception("The colored button was not RGBY. This shouldn't have happened, so please contact Bagels.");
+        }
+
+        foreach(object e in SearchAndMoveTo(new[] { exitp }))
+            yield return e;
+
+        if(X == 0)
+            Buttons[ButtonDirections.IndexOf(Direction.Left)].OnInteract();
+        if(X == 8)
+            Buttons[ButtonDirections.IndexOf(Direction.Right)].OnInteract();
+        if(Y == 0)
+            Buttons[ButtonDirections.IndexOf(Direction.Up)].OnInteract();
+        if(Y == 8)
+            Buttons[ButtonDirections.IndexOf(Direction.Down)].OnInteract();
+
+        yield return null;
+    }
+
+    private IEnumerable SpinToDirection()
+    {
+        Direction exitdir;
+        switch(ColoredButtonColor)
+        {
+            case Color.Red:
+                exitdir = Direction.Up;
+                break;
+            case Color.Green:
+                exitdir = Direction.Right;
+                break;
+            case Color.Blue:
+                exitdir = Direction.Down;
+                break;
+            case Color.Yellow:
+                exitdir = Direction.Left;
+                break;
+            default:
+                throw new Exception("The colored button was not RGBY. This shouldn't have happened, so please contact Bagels.");
+        }
+        Direction cdir = ButtonDirections[ColoredButton];
+
+        string spin = GetSpin(cdir, exitdir);
+
+        if(spin == "0")
+            yield break;
+        List<Vector2Int> locs = new List<Vector2Int>();
+        if(spin == "90" || spin == "180")
+        {
+            locs.Add(new Vector2Int(0, 1));
+            locs.Add(new Vector2Int(7, 0));
+            locs.Add(new Vector2Int(8, 7));
+            locs.Add(new Vector2Int(1, 8));
+        }
+        if(spin == "270" || spin == "180")
+        {
+            locs.Add(new Vector2Int(1, 0));
+            locs.Add(new Vector2Int(8, 1));
+            locs.Add(new Vector2Int(7, 8));
+            locs.Add(new Vector2Int(0, 7));
+        }
+
+        foreach(object e in SearchAndMoveTo(locs))
+            yield return e;
+
+        if(X == 1)
+            Buttons[ButtonDirections.IndexOf(Direction.Left)].OnInteract();
+        if(X == 7)
+            Buttons[ButtonDirections.IndexOf(Direction.Right)].OnInteract();
+        if(Y == 1)
+            Buttons[ButtonDirections.IndexOf(Direction.Up)].OnInteract();
+        if(Y == 7)
+            Buttons[ButtonDirections.IndexOf(Direction.Down)].OnInteract();
+        yield return new WaitForSeconds(0.1f);
+
+        if(spin == "180")
+            foreach(object e in SpinToDirection())
+                yield return e;
+    }
+
+    private IEnumerable SearchAndMoveTo(IEnumerable<Vector2Int> locs)
+    {
+        HashSet<Vector2Int> visited = new HashSet<Vector2Int>();
+        Dictionary<Vector2Int, Vector2Int> parents = new Dictionary<Vector2Int, Vector2Int>();
+        Queue<Vector2Int> q = new Queue<Vector2Int>();
+        Vector2Int startLoc = new Vector2Int(X, Y);
+        q.Enqueue(startLoc);
+        Vector2Int exit;
+
+        while(q.Count > 0)
+        {
+            Vector2Int working = q.Dequeue();
+            if(!visited.Add(working))
+                continue;
+            if(locs.Contains(working))
+            {
+                exit = working;
+                goto found;
+            }
+
+            List<Vector2Int> n = new List<Vector2Int>();
+            if((Maze[working.y][working.x] & Direction.Left) == Direction.Left)
+                n.Add(new Vector2Int(working.x - 1, working.y));
+            if((Maze[working.y][working.x] & Direction.Right) == Direction.Right)
+                n.Add(new Vector2Int(working.x + 1, working.y));
+            if((Maze[working.y][working.x] & Direction.Down) == Direction.Down)
+                n.Add(new Vector2Int(working.x, working.y + 1));
+            if((Maze[working.y][working.x] & Direction.Up) == Direction.Up)
+                n.Add(new Vector2Int(working.x, working.y - 1));
+            n.RemoveAll(v => v.x < 0 || v.x > 8 || v.y < 0 || v.y > 8);
+
+            foreach(Vector2Int cn in n)
+            {
+                if(visited.Contains(cn))
+                    continue;
+                q.Enqueue(cn);
+                parents[cn] = working;
+            }
+        }
+
+        throw new Exception("There was no valid turn found. This shouldn't have happened, so please contact Bagels.");
+
+        found:;
+
+        List<Vector2Int> path = new List<Vector2Int>();
+        Vector2Int p = exit;
+        while(p != startLoc)
+        {
+            path.Add(p);
+            p = parents[p];
+        }
+
+        for(int i = path.Count - 1; i >= 0; i--)
+        {
+            Vector2Int dif = path[i] - new Vector2Int(X, Y);
+            if(dif.x == 1)
+                Buttons[ButtonDirections.IndexOf(Direction.Right)].OnInteract();
+            if(dif.x == -1)
+                Buttons[ButtonDirections.IndexOf(Direction.Left)].OnInteract();
+            if(dif.y == 1)
+                Buttons[ButtonDirections.IndexOf(Direction.Down)].OnInteract();
+            if(dif.y == -1)
+                Buttons[ButtonDirections.IndexOf(Direction.Up)].OnInteract();
+
+            yield return new WaitForSeconds(0.1f);
+        }
+    }
+
+    private string GetSpin(Direction cdir, Direction exitdir)
+    {
+        IEnumerable<int> dirs = new[] { cdir, exitdir }.Select(d => (int)d);
+
+        if(dirs.SequenceEqual(new[] { 1, 2 }) ||
+            dirs.SequenceEqual(new[] { 2, 1 }) ||
+            dirs.SequenceEqual(new[] { 4, 8 }) ||
+            dirs.SequenceEqual(new[] { 8, 4 }))
+            return "180";
+        if(dirs.SequenceEqual(new[] { 1, 8 }) ||
+            dirs.SequenceEqual(new[] { 8, 2 }) ||
+            dirs.SequenceEqual(new[] { 2, 4 }) ||
+            dirs.SequenceEqual(new[] { 4, 1 }))
+            return "90";
+        if(dirs.SequenceEqual(new[] { 1, 4 }) ||
+            dirs.SequenceEqual(new[] { 4, 2 }) ||
+            dirs.SequenceEqual(new[] { 2, 8 }) ||
+            dirs.SequenceEqual(new[] { 8, 1 }))
+            return "270";
+        return "0";
     }
 }

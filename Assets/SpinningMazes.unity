@@ -420,10 +420,6 @@ Prefab:
       propertyPath: m_RootOrder
       value: 4
       objectReference: {fileID: 0}
-    - target: {fileID: 1835873723210706, guid: f41a6c6afa8cb0d43beacea0c250eb74, type: 2}
-      propertyPath: m_Name
-      value: ButtonContainer
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: f41a6c6afa8cb0d43beacea0c250eb74, type: 2}
   m_IsPrefabParent: 0

@@ -17,7 +17,15 @@ MonoBehaviour:
   description: 'No, this isn''t some horrible interface screw. I''m not that evil.
 
 
-    Module id: spinningMazes'
-  version: 1.1
+    Module id: spinningMazes
+
+
+    Manual:
+
+    https://ktane.timwi.de/HTML/Spinning%20Mazes.html
+
+
+    TP Supported'
+  version: 2.0
   outputFolder: build
   previewImage: {fileID: 2800000, guid: fbecdd37b0a5f4c40b62a57af8e851d9, type: 3}
